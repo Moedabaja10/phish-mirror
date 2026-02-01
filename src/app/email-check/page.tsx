@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Upload, Mail, AlertTriangle, Shield, FileText, Lightbulb, ChevronDown, ChevronUp, Sparkles, TrendingUp, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Upload, MessageSquare, AlertTriangle, Shield, FileText, Sparkles, CheckCircle2, TrendingUp, ChevronDown, Lightbulb } from "lucide-react";
 
 interface HighlightedSegment {
   text: string;
@@ -20,14 +20,28 @@ interface ScanResult {
   educationalTips?: string[];
 }
 
-export default function EmailCheckerPage() {
+export default function SMSCheckerPage() {
   const [text, setText] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [expandedSegment, setExpandedSegment] = useState<number | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  // Mouse parallax
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth - 0.5) * 20,
+        y: (e.clientY / window.innerHeight - 0.5) * 20,
+      });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -66,7 +80,7 @@ export default function EmailCheckerPage() {
     }
   };
 
-  const analyzeEmail = async () => {
+  const analyzeSMS = async () => {
     if (!text && !image) return;
 
     setLoading(true);
@@ -75,10 +89,11 @@ export default function EmailCheckerPage() {
     try {
       const formData = new FormData();
       if (text) formData.append("text", text);
+      if (phoneNumber) formData.append("phoneNumber", phoneNumber);
       if (image) formData.append("image", image);
       formData.append("interactive", "true");
 
-      const res = await fetch("/api/check-email", {
+      const res = await fetch("/api/check-sms", {
         method: "POST",
         body: formData,
       });
@@ -86,7 +101,7 @@ export default function EmailCheckerPage() {
       const data = await res.json();
       setResult(data);
     } catch (error) {
-      console.error("Error analyzing email:", error);
+      console.error("Error analyzing SMS:", error);
     } finally {
       setLoading(false);
     }
@@ -94,6 +109,7 @@ export default function EmailCheckerPage() {
 
   const clearAll = () => {
     setText("");
+    setPhoneNumber("");
     setImage(null);
     setImagePreview(null);
     setResult(null);
@@ -104,94 +120,89 @@ export default function EmailCheckerPage() {
     switch (type) {
       case "scam":
         return {
-          gradient: "from-threat-500/10 via-threat-500/5 to-transparent",
-          border: "border-threat-500/20 hover:border-threat-500/40",
-          iconBg: "bg-threat-500/10",
-          iconColor: "text-threat-500",
+          bg: "bg-threat-500/10",
+          border: "border-threat-500/30",
+          icon: "text-threat-500",
           badge: "bg-threat-500 text-white",
-          label: "Critical Risk"
         };
       case "suspicious":
         return {
-          gradient: "from-warning-500/10 via-warning-500/5 to-transparent",
-          border: "border-warning-500/20 hover:border-warning-500/40",
-          iconBg: "bg-warning-500/10",
-          iconColor: "text-warning-500",
+          bg: "bg-warning-500/10",
+          border: "border-warning-500/30",
+          icon: "text-warning-500",
           badge: "bg-warning-500 text-white",
-          label: "Warning"
         };
       case "safe":
         return {
-          gradient: "from-safe-500/10 via-safe-500/5 to-transparent",
-          border: "border-safe-500/20 hover:border-safe-500/40",
-          iconBg: "bg-safe-500/10",
-          iconColor: "text-safe-500",
+          bg: "bg-safe-500/10",
+          border: "border-safe-500/30",
+          icon: "text-safe-500",
           badge: "bg-safe-500 text-white",
-          label: "Verified Safe"
         };
       default:
         return {
-          gradient: "from-muted/5 to-transparent",
-          border: "border-border/20",
-          iconBg: "bg-muted/10",
-          iconColor: "text-muted-foreground",
+          bg: "bg-muted/10",
+          border: "border-border/30",
+          icon: "text-muted-foreground",
           badge: "bg-muted text-foreground",
-          label: "Neutral"
         };
     }
   };
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Premium Header Section */}
-      <div className="border-b border-border/40 bg-gradient-to-b from-background to-background/50 backdrop-blur-sm">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute top-20 left-20 w-96 h-96 bg-monitor-500/10 rounded-full blur-3xl animate-float"
+          style={{ transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`, transition: 'transform 0.3s ease-out' }}
+        />
+        <div 
+          className="absolute bottom-20 right-20 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl animate-float" 
+          style={{ animationDelay: '1s', animationDuration: '4s', transform: `translate(${-mousePosition.x}px, ${-mousePosition.y}px)`, transition: 'transform 0.3s ease-out' }} 
+        />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-gradient-to-r from-monitor-500/5 to-primary/5 rounded-full blur-3xl animate-pulse-slow" />
+      </div>
+
+      {/* Header */}
+      <div className="relative border-b border-border/40 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-8 py-12">
           <div className="flex items-start justify-between">
-            <div className="space-y-4">
+            <div className="space-y-4 animate-slide-in-up">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full"></div>
-                  <div className="relative p-3 bg-gradient-to-br from-primary/20 to-monitor-500/20 rounded-xl border border-primary/20">
-                    <Mail className="w-8 h-8 text-primary" />
+                  <div className="absolute inset-0 bg-monitor-500/30 blur-xl rounded-full animate-pulse-glow" />
+                  <div className="relative p-3 bg-gradient-to-br from-monitor-500/20 to-primary/20 rounded-xl border border-monitor-500/30">
+                    <MessageSquare className="w-8 h-8 text-monitor-500" />
                   </div>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h1 className="text-4xl font-display font-bold tracking-tight">
-                      Email Security Analysis
-                    </h1>
-                    <Sparkles className="w-5 h-5 text-primary" />
-                  </div>
-                  <p className="text-muted-foreground">
-                    Enterprise-grade threat detection powered by advanced AI
+                  <h1 className="text-5xl font-display font-bold tracking-tight text-white drop-shadow-[0_0_30px_rgba(6,182,212,0.3)]">
+                    SMS Security
+                  </h1>
+                  <p className="text-muted-foreground text-lg mt-1">
+                    AI-powered text message scam detection
                   </p>
                 </div>
               </div>
             </div>
             
-            {/* Trust Indicators */}
-            <div className="flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-safe-500 animate-pulse"></div>
-                <span className="text-muted-foreground">System Active</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Encrypted</span>
+            <div className="flex items-center gap-3 animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-safe-500/10 border border-safe-500/30">
+                <div className="w-2 h-2 rounded-full bg-safe-500 animate-pulse" />
+                <span className="text-sm font-medium text-safe-400">System Active</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-12 space-y-12">
-        {/* Input Section - Premium Grid */}
+      <div className="relative max-w-7xl mx-auto px-8 py-12 space-y-12">
+        {/* Input Section */}
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Image Upload - Premium Design */}
-          <div className="group">
-            <label className="block text-sm font-medium mb-3 text-foreground/80">
-              Upload Evidence
-            </label>
+          {/* Image Upload */}
+          <div className="animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
+            <label className="block text-sm font-medium mb-3 text-white">Upload Screenshot</label>
             <div
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -199,8 +210,8 @@ export default function EmailCheckerPage() {
               onDrop={handleDrop}
               className={`relative border-2 border-dashed rounded-2xl transition-all duration-300 ${
                 dragActive
-                  ? "border-primary bg-primary/5 shadow-glow-lg"
-                  : "border-border/40 hover:border-primary/50 bg-card/50"
+                  ? "border-monitor-500 bg-monitor-500/5 scale-105"
+                  : "border-border/40 hover:border-monitor-500/50 bg-card/50"
               }`}
             >
               <input
@@ -213,11 +224,7 @@ export default function EmailCheckerPage() {
               {imagePreview ? (
                 <div className="p-6 space-y-4">
                   <div className="relative rounded-xl overflow-hidden bg-muted/10 border border-border/40">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full h-56 object-contain"
-                    />
+                    <img src={imagePreview} alt="Preview" className="w-full h-56 object-contain" />
                   </div>
                   <button
                     onClick={(e) => {
@@ -236,67 +243,68 @@ export default function EmailCheckerPage() {
                     <Upload className="w-8 h-8 text-muted-foreground" />
                   </div>
                   <div className="space-y-2">
-                    <p className="font-medium text-foreground">
-                      Drop screenshot here
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      or click to browse • PNG, JPG up to 10MB
-                    </p>
+                    <p className="font-medium text-white">Drop screenshot here</p>
+                    <p className="text-sm text-muted-foreground">or click to browse • PNG, JPG up to 10MB</p>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Text Input - Premium Design */}
-          <div className="group">
-            <label className="block text-sm font-medium mb-3 text-foreground/80">
-              Email Content
-            </label>
-            <div className="relative">
+          {/* Text Input */}
+          <div className="animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
+            <label className="block text-sm font-medium mb-3 text-white">SMS Content</label>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-muted-foreground mb-2">Sender's Phone Number (Optional)</label>
+                <input
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                  className="w-full bg-card/50 border-2 border-border/40 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-monitor-500/50 focus:bg-card transition-all"
+                />
+              </div>
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Paste the full email content here...&#10;&#10;Include headers, body, links, and sender information for comprehensive analysis."
-                className="w-full h-[280px] bg-card/50 border-2 border-border/40 rounded-2xl p-6 text-sm font-mono text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 focus:bg-card transition-all resize-none scrollbar-thin"
+                placeholder="Paste the text message here...&#10;&#10;Include full message content, links, and any reply instructions"
+                className="w-full h-[200px] bg-card/50 border-2 border-border/40 rounded-xl p-5 text-sm font-mono text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-monitor-500/50 focus:bg-card transition-all resize-none scrollbar-thin"
               />
-              <div className="absolute bottom-4 right-4 text-xs text-muted-foreground">
-                {text.length} characters
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Action Button - Premium */}
-        <div className="flex items-center gap-4">
+        {/* Action Button */}
+        <div className="flex gap-4 animate-slide-in-up" style={{ animationDelay: '0.4s' }}>
           <button
-            onClick={analyzeEmail}
+            onClick={analyzeSMS}
             disabled={loading || (!text && !image)}
-            className={`flex-1 relative group overflow-hidden py-5 px-8 rounded-xl font-semibold text-base transition-all duration-300 ${
+            className={`flex-1 relative group overflow-hidden py-5 px-8 rounded-xl font-semibold text-base transition-all ${
               loading || (!text && !image)
                 ? "bg-muted/50 text-muted-foreground cursor-not-allowed"
-                : "bg-gradient-to-r from-primary via-primary to-monitor-500 hover:shadow-glow-lg text-white"
+                : "bg-gradient-to-r from-monitor-500 via-primary to-monitor-500 hover:shadow-glow-lg text-white"
             }`}
           >
-            {!loading && !(!text && !image) && (
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            {!loading && (text || image) && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
             )}
             <span className="relative flex items-center justify-center gap-3">
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Analyzing Security Threats...
+                  Analyzing with AI...
                 </>
               ) : (
                 <>
                   <Shield className="w-5 h-5" />
-                  Run Security Analysis
+                  Analyze SMS
                 </>
               )}
             </span>
           </button>
 
-          {(text || image) && (
+          {(text || image || phoneNumber) && (
             <button
               onClick={clearAll}
               className="px-6 py-5 rounded-xl font-medium border-2 border-border/40 hover:bg-muted/50 hover:border-border transition-all"
@@ -306,166 +314,113 @@ export default function EmailCheckerPage() {
           )}
         </div>
 
-        {/* Results Section - Premium Design */}
+        {/* Results */}
         {result && (
-          <div className="space-y-8 animate-slide-in-up">
-            {/* Executive Summary Card */}
-            <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-card/50 to-card/30 backdrop-blur-sm">
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
-              
-              <div className="p-8 space-y-6">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-2xl font-display font-semibold">Security Assessment</h2>
-                      <CheckCircle2 className="w-5 h-5 text-safe-500" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Analysis completed in real-time using GPT-4 Vision
-                    </p>
-                  </div>
-                  
+          <div className="space-y-8 animate-scale-in">
+            {/* Verdict */}
+            <div className="glass-strong rounded-2xl p-8 border border-border/40">
+              <div className="flex items-start justify-between mb-6">
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-display font-semibold text-white">Analysis Complete</h2>
                   <div className="flex items-center gap-3">
-                    <div
-                      className={`px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-lg ${
-                        result.isScam
-                          ? "bg-threat-500 text-white"
-                          : "bg-safe-500 text-white"
-                      }`}
-                    >
-                      {result.isScam ? (
-                        <>
-                          <AlertTriangle className="w-4 h-4" />
-                          HIGH RISK
-                        </>
-                      ) : (
-                        <>
-                          <Shield className="w-4 h-4" />
-                          VERIFIED SAFE
-                        </>
-                      )}
+                    <div className={`px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-lg ${
+                      result.isScam ? "bg-threat-500 text-white" : "bg-safe-500 text-white"
+                    }`}>
+                      {result.isScam ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                      {result.isScam ? "LIKELY SCAM" : "APPEARS SAFE"}
+                    </div>
+                    <div className="px-4 py-2 rounded-full bg-muted/50 text-sm font-mono">
+                      {result.confidence}% Confidence
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Confidence Score - Premium Meter */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Confidence Score</p>
-                      <p className="text-3xl font-display font-bold tabular-nums">{result.confidence}%</p>
-                    </div>
-                    <TrendingUp className={`w-8 h-8 ${result.isScam ? 'text-threat-500' : 'text-safe-500'}`} />
-                  </div>
-                  
-                  <div className="relative h-3 bg-muted/20 rounded-full overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-muted/10 to-muted/5"></div>
-                    <div
-                      className={`relative h-full rounded-full transition-all duration-1000 ease-out ${
-                        result.isScam
-                          ? "bg-gradient-to-r from-warning-500 via-threat-500 to-threat-600"
-                          : "bg-gradient-to-r from-safe-500 via-monitor-500 to-primary"
-                      }`}
-                      style={{ width: `${result.confidence}%` }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent"></div>
-                    </div>
+              {/* Confidence Meter */}
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between text-sm font-medium">
+                  <span className="text-muted-foreground">Threat Level</span>
+                  <span className="font-mono text-white">{result.confidence}/100</span>
+                </div>
+                <div className="relative h-3 bg-muted/20 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-1000 ease-out ${
+                    result.isScam
+                      ? "bg-gradient-to-r from-warning-500 via-threat-500 to-threat-600"
+                      : "bg-gradient-to-r from-safe-500 via-monitor-500 to-primary"
+                  }`} style={{ width: `${result.confidence}%` }}>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
                   </div>
                 </div>
+              </div>
 
-                {/* Summary */}
-                <div className="p-5 rounded-xl bg-muted/20 border border-border/30">
-                  <p className="text-foreground/90 leading-relaxed">{result.reason}</p>
-                </div>
+              {/* Summary */}
+              <div className="p-5 rounded-xl bg-muted/20 border border-border/30">
+                <p className="text-foreground/90 leading-relaxed">{result.reason}</p>
               </div>
             </div>
 
-            {/* Threat Analysis - Premium Cards */}
+            {/* Threat Intelligence - Premium Cards */}
             {result.highlightedText && result.highlightedText.some(s => s.type !== "neutral") && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 pb-2">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Lightbulb className="w-5 h-5 text-primary" />
-                  </div>
+              <div className="glass-strong rounded-2xl p-8 border border-border/40 space-y-6">
+                <div className="flex items-center gap-3">
+                  <Lightbulb className="w-6 h-6 text-warning-400" />
                   <div>
-                    <h3 className="text-xl font-display font-semibold">Threat Intelligence</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Click any item to view detailed analysis
-                    </p>
+                    <h3 className="text-2xl font-display font-semibold text-white">Threat Intelligence</h3>
+                    <p className="text-sm text-muted-foreground">Click any item for detailed analysis</p>
                   </div>
                 </div>
 
                 <div className="grid gap-4">
-                  {result.highlightedText
-                    .filter(segment => segment.type !== "neutral")
-                    .map((segment, i) => {
-                      const config = getTypeConfig(segment.type);
-                      const isExpanded = expandedSegment === i;
+                  {result.highlightedText.filter(s => s.type !== "neutral").map((segment, i) => {
+                    const config = getTypeConfig(segment.type);
+                    const isExpanded = expandedSegment === i;
 
-                      return (
-                        <div
-                          key={i}
-                          className={`relative group rounded-xl border-2 transition-all duration-300 bg-gradient-to-br ${config.gradient} ${config.border} ${
-                            isExpanded ? 'shadow-xl' : 'hover:shadow-lg'
-                          }`}
+                    return (
+                      <div
+                        key={i}
+                        className={`border-2 rounded-xl transition-all ${config.border} ${config.bg} ${isExpanded ? 'shadow-xl' : 'hover:shadow-lg'}`}
+                      >
+                        <button
+                          onClick={() => setExpandedSegment(isExpanded ? null : i)}
+                          className="w-full p-6 text-left"
                         >
-                          <button
-                            onClick={() => setExpandedSegment(isExpanded ? null : i)}
-                            className="w-full p-6 text-left"
-                          >
-                            <div className="flex items-start gap-4">
-                              <div className={`p-2.5 rounded-lg ${config.iconBg}`}>
-                                {segment.type === "scam" && <AlertTriangle className={`w-5 h-5 ${config.iconColor}`} />}
-                                {segment.type === "suspicious" && <AlertTriangle className={`w-5 h-5 ${config.iconColor}`} />}
-                                {segment.type === "safe" && <Shield className={`w-5 h-5 ${config.iconColor}`} />}
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-start gap-3 flex-1">
+                              <div className={`p-2.5 rounded-lg bg-${segment.type === 'scam' ? 'threat' : segment.type === 'suspicious' ? 'warning' : 'safe'}-500/10`}>
+                                {segment.type === 'scam' ? <AlertTriangle className={`w-5 h-5 ${config.icon}`} /> :
+                                 segment.type === 'suspicious' ? <AlertTriangle className={`w-5 h-5 ${config.icon}`} /> :
+                                 <Shield className={`w-5 h-5 ${config.icon}`} />}
                               </div>
-                              
                               <div className="flex-1 space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${config.badge}`}>
-                                    {config.label}
-                                  </span>
-                                  <span className="text-xs font-semibold text-foreground/60 uppercase tracking-wide">
-                                    {segment.category}
-                                  </span>
-                                </div>
-                                <p className="text-base font-medium text-foreground leading-relaxed">
-                                  "{segment.text}"
-                                </p>
-                              </div>
-
-                              <div className="flex-shrink-0">
-                                <div className={`p-2 rounded-lg transition-transform ${isExpanded ? 'rotate-180 bg-muted/20' : 'group-hover:bg-muted/10'}`}>
-                                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                                </div>
+                                <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${config.badge}`}>
+                                  {segment.category}
+                                </span>
+                                <p className="text-base font-medium text-white leading-relaxed">"{segment.text}"</p>
                               </div>
                             </div>
-                          </button>
-
-                          {isExpanded && (
-                            <div className="px-6 pb-6 pt-2 border-t border-border/30 animate-slide-in-up">
-                              <div className="pl-14 pr-4">
-                                <p className="text-sm text-foreground/80 leading-relaxed">
-                                  {segment.explanation}
-                                </p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                            <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          </div>
+                        </button>
+                        {isExpanded && (
+                          <div className="px-6 pb-6 pt-2 border-t border-border/30 animate-slide-in-up">
+                            <p className="text-sm text-foreground/80 leading-relaxed pl-14">{segment.explanation}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Educational Insights */}
+            {/* Educational Tips - Security Best Practices */}
             {result.educationalTips && (
               <div className="rounded-2xl border border-border/40 bg-gradient-to-br from-primary/5 to-transparent p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <Lightbulb className="w-5 h-5 text-primary" />
                   </div>
-                  <h3 className="text-xl font-display font-semibold">Security Best Practices</h3>
+                  <h3 className="text-xl font-display font-semibold text-white">Security Best Practices</h3>
                 </div>
                 
                 <div className="grid gap-4">
@@ -484,29 +439,19 @@ export default function EmailCheckerPage() {
               </div>
             )}
 
-            {/* Action Recommendation */}
-            <div
-              className={`rounded-2xl border-2 p-8 ${
-                result.isScam
-                  ? "bg-gradient-to-br from-threat-500/10 to-threat-500/5 border-threat-500/30"
-                  : "bg-gradient-to-br from-safe-500/10 to-safe-500/5 border-safe-500/30"
-              }`}
-            >
-              <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-xl ${result.isScam ? 'bg-threat-500/10' : 'bg-safe-500/10'}`}>
-                  <Shield className={`w-6 h-6 ${result.isScam ? 'text-threat-500' : 'text-safe-500'}`} />
-                </div>
-                <div className="flex-1 space-y-2">
-                  <h3 className="text-lg font-display font-semibold">Recommended Action</h3>
-                  <p className="text-base text-foreground/90 leading-relaxed">
-                    {result.recommendation}
-                  </p>
-                </div>
-              </div>
+            {/* Recommendation */}
+            <div className={`rounded-2xl border-2 p-8 ${
+              result.isScam ? "bg-threat-500/5 border-threat-500/30" : "bg-safe-500/5 border-safe-500/30"
+            }`}>
+              <h3 className="font-display text-lg mb-3 flex items-center gap-2 text-white">
+                <Shield className="w-5 h-5" />
+                What You Should Do
+              </h3>
+              <p className="text-foreground/90 leading-relaxed text-lg">{result.recommendation}</p>
             </div>
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }

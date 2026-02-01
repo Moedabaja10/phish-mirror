@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono, Sora } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
+import { Sidebar } from "@/components/Sidebar";
 
 // Display Font - Sora (geometric, modern, distinctive)
 const sora = Sora({
@@ -51,7 +52,12 @@ export default function RootLayout({
         className={`${outfit.variable} ${sora.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
         <AuthProvider>
-          {children}
+          <div className="flex min-h-screen bg-background">
+            <Sidebar />
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
         </AuthProvider>
       </body>
     </html>
