@@ -1,7 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { analyzeText, AnalysisResult } from "@/lib/detection/analyze";
+import { useAuth } from "@/lib/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { logoutUser } from "@/lib/firebase/auth";
+
+/* -------------------- Mock Call Script -------------------- */
 
 const mockCallLines = [
   "Hello, this is the bank fraud department.",
@@ -10,12 +15,31 @@ const mockCallLines = [
   "I need you to provide the verification code we sent to your phone.",
 ];
 
+/* -------------------- Component -------------------- */
+
 export default function DashboardPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
   const [input, setInput] = useState("");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [callActive, setCallActive] = useState(false);
   const [callTranscript, setCallTranscript] = useState<string[]>([]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
+
+  const handleLogout = async () => {
+    await logoutUser();
+    router.push("/login");
+  };
+
+  /* -------- Paste-in Analysis -------- */
 
   async function analyze() {
     if (!input.trim()) return;

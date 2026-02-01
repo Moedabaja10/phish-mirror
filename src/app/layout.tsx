@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono, Sora } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/contexts/AuthContext";
 
 // Display Font - Sora (geometric, modern, distinctive)
 // Alternative to Clash Display that's available on Google Fonts
@@ -49,7 +50,9 @@ export default function RootLayout({
       <body
         className={`${outfit.variable} ${sora.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

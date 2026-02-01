@@ -1,5 +1,6 @@
 import { RULES, DetectionReason } from "./rules";
 
+// Export the AnalysisResult type so dashboard can use it
 export interface AnalysisResult {
   verdict: "SCAM" | "SUSPICIOUS" | "SAFE";
   score: number;
