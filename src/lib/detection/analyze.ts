@@ -1,6 +1,13 @@
 import { RULES, DetectionReason } from "./rules";
 
-export function analyzeText(text: string) {
+// Export the AnalysisResult type so dashboard can use it
+export interface AnalysisResult {
+  verdict: "SCAM" | "SUSPICIOUS" | "SAFE";
+  score: number;
+  reasons: DetectionReason[];
+}
+
+export function analyzeText(text: string): AnalysisResult {
   const reasons: DetectionReason[] = [];
 
   for (const rule of RULES) {
