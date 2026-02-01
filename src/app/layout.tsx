@@ -1,13 +1,43 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Outfit, JetBrains_Mono, Sora } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/contexts/AuthContext";
 
-const inter = Inter({ subsets: ["latin"] });
+// Display Font - Sora (geometric, modern, distinctive)
+const sora = Sora({
+  subsets: ["latin"],
+  variable: "--font-clash",
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
+
+// Body Font - Outfit (clean, modern, distinctive alternative to Inter)
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+// Monospace Font - JetBrains Mono (for transcripts and technical data)
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
-  title: "ProtectorNumber - AI Scam Call Detection",
-  description: "AI-powered phone protection against scam calls",
+  title: "PhishMirror | AI-Powered Scam Protection",
+  description: "Real-time scam detection and call interception powered by Teli AI",
+  keywords: ["scam protection", "call screening", "AI security", "fraud detection"],
+  authors: [{ name: "PhishMirror Team" }],
+  openGraph: {
+    title: "PhishMirror | AI-Powered Scam Protection",
+    description: "Real-time scam detection and call interception powered by Teli AI",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -16,9 +46,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} antialiased`}>
-        {children}
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body
+        className={`${outfit.variable} ${sora.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+      >
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

@@ -2,32 +2,45 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInUser, signInWithGoogle } from "@/lib/firebase/auth";
+import { signUpUser, signInWithGoogle } from "@/lib/firebase/auth";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
     setLoading(true);
 
-    const result = await signInUser(email, password);
+    const result = await signUpUser(email, password, displayName);
 
     if (result.success) {
       router.push("/dashboard");
     } else {
-      setError(result.error || "Failed to sign in");
+      setError(result.error || "Failed to create account");
     }
 
     setLoading(false);
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignup = async () => {
     setError("");
     setLoading(true);
 
@@ -36,7 +49,7 @@ export default function LoginPage() {
     if (result.success) {
       router.push("/dashboard");
     } else {
-      setError(result.error || "Failed to sign in with Google");
+      setError(result.error || "Failed to sign up with Google");
     }
 
     setLoading(false);
@@ -65,13 +78,13 @@ export default function LoginPage() {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">PhishMirror</h1>
-          <p className="text-blue-200">Live Multi-Channel Scam Interceptor</p>
+          <p className="text-blue-200">Create Your Account</p>
         </div>
 
-        {/* Login Card */}
+        {/* Signup Card */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border border-white/20">
           <h2 className="text-2xl font-semibold text-white mb-6 text-center">
-            Sign In
+            Sign Up
           </h2>
 
           {error && (
@@ -80,7 +93,22 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleEmailLogin} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div>
+              <label htmlFor="displayName" className="block text-sm font-medium text-blue-100 mb-2">
+                Full Name
+              </label>
+              <input
+                id="displayName"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                placeholder="John Doe"
+                required
+              />
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-blue-100 mb-2">
                 Email
@@ -111,12 +139,27 @@ export default function LoginPage() {
               />
             </div>
 
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-blue-100 mb-2">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-blue-200/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
             <button
               type="submit"
               disabled={loading}
               className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition duration-200 shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Creating account..." : "Create Account"}
             </button>
           </form>
 
@@ -130,7 +173,7 @@ export default function LoginPage() {
           </div>
 
           <button
-            onClick={handleGoogleLogin}
+            onClick={handleGoogleSignup}
             disabled={loading}
             className="w-full py-3 bg-white hover:bg-gray-100 text-gray-800 font-semibold rounded-lg transition duration-200 flex items-center justify-center gap-3 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -157,12 +200,12 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center">
             <p className="text-blue-200 text-sm">
-              Don't have an account?{" "}
+              Already have an account?{" "}
               <button
-                onClick={() => router.push("/signup")}
+                onClick={() => router.push("/login")}
                 className="text-blue-400 hover:text-blue-300 font-semibold transition"
               >
-                Sign up
+                Sign in
               </button>
             </p>
           </div>
