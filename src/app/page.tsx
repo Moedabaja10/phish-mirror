@@ -4,6 +4,8 @@ export default function Home() {
       <h1>PhishMirror</h1>
       <p>App is running.</p>
       <a href="/dashboard">Go to Dashboard</a>
+      <a href="/teli">Go to Teli</a>
+
     </main>
   );
 }
