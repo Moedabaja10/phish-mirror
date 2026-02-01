@@ -24,7 +24,6 @@ export default function DashboardPage() {
   const [input, setInput] = useState("");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
-
   const [callActive, setCallActive] = useState(false);
   const [callTranscript, setCallTranscript] = useState<string[]>([]);
 
@@ -44,7 +43,6 @@ export default function DashboardPage() {
 
   async function analyze() {
     if (!input.trim()) return;
-
     setLoading(true);
     setResult(null);
 
@@ -59,8 +57,6 @@ export default function DashboardPage() {
     setLoading(false);
   }
 
-  /* -------- Live Call Simulation -------- */
-
   async function simulateCall() {
     setCallActive(true);
     setCallTranscript([]);
@@ -70,10 +66,8 @@ export default function DashboardPage() {
 
     for (let i = 0; i < mockCallLines.length; i++) {
       await new Promise((r) => setTimeout(r, 1500));
-
       const line = mockCallLines[i];
       accumulatedText += " " + line;
-
       setCallTranscript((prev) => [...prev, line]);
       setResult(analyzeText(accumulatedText));
     }
@@ -81,219 +75,153 @@ export default function DashboardPage() {
     setCallActive(false);
   }
 
-  /* -------- Loading State -------- */
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-blue-200">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null; // Will redirect via useEffect
-  }
-
-  /* -------------------- Render -------------------- */
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      {/* Header with User Info */}
-      <header className="bg-white/10 backdrop-blur-lg border-b border-white/20">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
-              <svg
-                className="w-6 h-6 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
-            </div>
-            <h1 className="text-xl font-bold text-white">PhishMirror</h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm text-blue-200">Welcome back,</p>
-              <p className="text-white font-semibold">
-                {user?.displayName || user?.email}
-              </p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-200 rounded-lg transition border border-red-500/30"
-            >
-              Logout
-            </button>
-          </div>
+    <main className="min-h-screen bg-background p-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-5xl font-display text-gradient-primary">
+            PhishMirror
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Live scam interception and explanation
+          </p>
         </div>
-      </header>
 
-      {/* Main Content - Your Original Dashboard */}
-      <main
-        style={{
-          padding: 32,
-          maxWidth: 900,
-          margin: "0 auto",
-        }}
-      >
-        <p style={{ marginBottom: 24, color: "#cbd5e1" }}>
-          Live scam interception and explanation
-        </p>
+        {/* Live Call Simulation */}
+        <div className="glass p-6 rounded-lg space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-display">Live Call Simulation</h2>
+            {callActive && (
+              <div className="flex items-center gap-2">
+                <div className="pulse-glow bg-threat-500 w-3 h-3 rounded-full"></div>
+                <span className="text-sm text-threat-400">Call in progress</span>
+              </div>
+            )}
+          </div>
 
-        {/* ---- Simulated Call ---- */}
-        <button
-          onClick={simulateCall}
-          disabled={callActive}
-          style={{
-            padding: "10px 18px",
-            fontSize: 14,
-            borderRadius: 6,
-            border: "none",
-            backgroundColor: "#3b82f6",
-            color: "#fff",
-            cursor: callActive ? "not-allowed" : "pointer",
-            marginBottom: 24,
-            opacity: callActive ? 0.6 : 1,
-          }}
-        >
-          {callActive ? "Call in progress…" : "Simulate Incoming Call"}
-        </button>
-
-        {callTranscript.length > 0 && (
-          <section
-            style={{
-              padding: 16,
-              border: "1px solid rgba(255,255,255,0.2)",
-              borderRadius: 6,
-              marginBottom: 24,
-              backgroundColor: "rgba(255,255,255,0.05)",
-            }}
+          <button
+            onClick={simulateCall}
+            disabled={callActive}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${
+              callActive
+                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : "bg-primary hover:bg-primary/90 text-primary-foreground hover-lift shadow-glow-sm"
+            }`}
           >
-            <h3 style={{ color: "#fff", marginBottom: 12 }}>
-              Live Call Transcript
-            </h3>
-            <ul>
-              {callTranscript.map((line, i) => (
-                <li
-                  key={i}
-                  style={{ marginBottom: 6, color: "#cbd5e1" }}
-                >
-                  {line}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+            {callActive ? "Call in progress..." : "🎭 Simulate Incoming Call"}
+          </button>
 
-        {/* ---- Paste-in Analysis ---- */}
-        <h3 style={{ color: "#fff", marginBottom: 12 }}>
-          Analyze Message or Transcript
-        </h3>
-
-        <textarea
-          rows={6}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Paste suspicious message or transcript here..."
-          style={{
-            width: "100%",
-            padding: 12,
-            fontSize: 14,
-            borderRadius: 6,
-            border: "1px solid rgba(255,255,255,0.2)",
-            marginBottom: 12,
-            backgroundColor: "rgba(255,255,255,0.05)",
-            color: "#fff",
-          }}
-        />
-
-        <button
-          onClick={analyze}
-          disabled={loading}
-          style={{
-            padding: "10px 16px",
-            fontSize: 14,
-            borderRadius: 6,
-            border: "none",
-            backgroundColor: "#3b82f6",
-            color: "#fff",
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.6 : 1,
-          }}
-        >
-          {loading ? "Analyzing…" : "Analyze"}
-        </button>
-
-        {/* ---- Results ---- */}
-        {result && (
-          <section
-            style={{
-              marginTop: 32,
-              padding: 20,
-              borderRadius: 8,
-              border: "1px solid rgba(255,255,255,0.2)",
-              backgroundColor: "rgba(255,255,255,0.05)",
-            }}
-          >
-            <h2 style={{ color: "#fff" }}>
-              Verdict:{" "}
-              <span
-                style={{
-                  color:
-                    result.verdict === "SCAM"
-                      ? "#ef4444"
-                      : result.verdict === "SUSPICIOUS"
-                      ? "#f59e0b"
-                      : "#22c55e",
-                }}
-              >
-                {result.verdict}
-              </span>
-            </h2>
-
-            <p style={{ marginBottom: 16, color: "#cbd5e1" }}>
-              Risk Score: <strong>{result.score}</strong>
-            </p>
-
-            <h3 style={{ color: "#fff", marginBottom: 12 }}>
-              Why this was flagged
-            </h3>
-
-            {result.reasons.length === 0 ? (
-              <p style={{ color: "#cbd5e1" }}>No scam indicators detected.</p>
-            ) : (
-              <ul>
-                {result.reasons.map((r, i) => (
+          {/* Live Transcript */}
+          {callTranscript.length > 0 && (
+            <div className="glass-strong p-4 rounded-lg space-y-3 animate-slide-in-up">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-monitor-500 rounded-full animate-pulse"></div>
+                <h3 className="font-display text-lg">Live Call Transcript</h3>
+              </div>
+              <ul className="space-y-2 font-mono text-sm">
+                {callTranscript.map((line, i) => (
                   <li
                     key={i}
-                    style={{ marginBottom: 10, color: "#cbd5e1" }}
+                    className="stagger-item bg-muted/50 p-3 rounded border-l-2 border-monitor-500"
                   >
-                    <strong style={{ color: "#fff" }}>{r.title}</strong>
-                    {r.evidence && (
-                      <div style={{ fontSize: 12, color: "#94a3b8" }}>
-                        Evidence: "{r.evidence}"
-                      </div>
-                    )}
+                    {line}
                   </li>
                 ))}
               </ul>
-            )}
-          </section>
+            </div>
+          )}
+        </div>
+
+        {/* Manual Analysis */}
+        <div className="glass p-6 rounded-lg space-y-4">
+          <h2 className="text-2xl font-display">Analyze Message or Transcript</h2>
+          
+          <textarea
+            rows={6}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Paste suspicious message or transcript here..."
+            className="w-full bg-muted/30 border border-border rounded-lg p-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+          />
+
+          <button
+            onClick={analyze}
+            disabled={loading}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${
+              loading
+                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                : "bg-monitor-500 hover:bg-monitor-600 text-white hover-lift"
+            }`}
+          >
+            {loading ? "Analyzing..." : "🔍 Analyze"}
+          </button>
+        </div>
+
+        {/* Results */}
+        {result && (
+          <div className="glass-strong p-6 rounded-lg space-y-6 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-display">Analysis Results</h2>
+              <span
+                className={`px-4 py-2 rounded-full font-medium text-sm ${
+                  result.verdict === "SCAM"
+                    ? "badge-threat"
+                    : result.verdict === "SUSPICIOUS"
+                    ? "badge-warning"
+                    : "badge-safe"
+                }`}
+              >
+                {result.verdict === "SCAM" && "🚨"}
+                {result.verdict === "SUSPICIOUS" && "⚠️"}
+                {result.verdict === "SAFE" && "✅"}
+                {" " + result.verdict}
+              </span>
+            </div>
+
+            {/* Threat Meter */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Risk Score</span>
+                <span className="font-bold font-mono">{result.score}/100</span>
+              </div>
+              <div className="w-full h-3 bg-muted/20 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-safe-500 via-warning-500 to-threat-500 transition-all duration-1000 ease-out"
+                  style={{ width: `${result.score}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Reasons */}
+            <div className="space-y-3">
+              <h3 className="font-display text-lg">Why this was flagged</h3>
+              {result.reasons.length === 0 ? (
+                <p className="text-safe-400">✅ No scam indicators detected.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {result.reasons.map((r, i) => (
+                    <li
+                      key={i}
+                      className="glass p-4 rounded-lg space-y-1 border-l-4 border-threat-500"
+                    >
+                      <div className="font-medium text-threat-400">{r.title}</div>
+                      {r.evidence && (
+                        <div className="font-mono text-sm text-muted-foreground bg-muted/30 p-2 rounded">
+                          Evidence: "{r.evidence}"
+                        </div>
+                      )}
+                      <div className="text-xs text-muted-foreground">
+                        Weight: {r.weight}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         )}
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
