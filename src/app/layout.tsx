@@ -1,10 +1,10 @@
+// src/app/layout.tsx
 import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono, Sora } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 
 // Display Font - Sora (geometric, modern, distinctive)
-// Alternative to Clash Display that's available on Google Fonts
 const sora = Sora({
   subsets: ["latin"],
   variable: "--font-clash",
